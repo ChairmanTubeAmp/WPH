@@ -1,33 +1,23 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
 Vagrant.configure(2) do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
-
   
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
-
    # Set a base path
    basepath = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/"
+
+   # Define box given by WP
    config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
 
-   #VirtualBox config
-#   config.vm.provider "virtualbox" do |vb|
+   #Don't upgrade boxes automatically
+   config.vm.box_check_update = false
+
 #   # Display the VirtualBox GUI when booting the machine
+#   config.vm.provider "virtualbox" do |vb|
 #   vb.gui = true
 #   end
 
    #Common VM attributes
-
    config.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
    config.vm.synced_folder ".", "/vagrant", :disabled => true
    
@@ -39,15 +29,12 @@ Vagrant.configure(2) do |config|
          vb.memory = "2048"
        end
        
-#       front.vm.provision "shell", inline: <<-SHELL
-#         sudo yum -y update
-#         SHELL
+       #Update OS and all userland software
+       front.vm.provision "shell", inline: <<-SHELL
+         sudo yum -y update
+         SHELL
 
-
-
-       #Reboot the VM prior to running Ansible to activate kernel and OS updates
-#       front.vm.provision :reload
-
+       #Ansible-based provisioning
 #       front.vm.provision :ansible do |ansible|
 #       ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/front-playbook.yml"
 #         ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
@@ -64,16 +51,12 @@ Vagrant.configure(2) do |config|
          vb.memory = "4096"
        end
      
-#       app.vm.provision "shell", inline: <<-SHELL
-#         sudo yum -y update
-#         SHELL
+       #Update OS and all userland software
+       app.vm.provision "shell", inline: <<-SHELL
+         sudo yum -y update
+         SHELL
 
-
-
-       #Reboot the VM prior to running Ansible to activate kernel and OS updates
-#       app.vm.provision :reload
-
-
+       #Ansible-based provisioning
  #      app.vm.provision :ansible do |ansible|
  #        ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/app-playbook.yml"
  #        ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
