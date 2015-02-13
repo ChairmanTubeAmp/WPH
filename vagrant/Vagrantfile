@@ -10,9 +10,11 @@ Vagrant.configure(2) do |config|
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
 
+  
+
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/centos-65-x64-virtualbox-nocm.box"
+
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -31,7 +33,8 @@ Vagrant.configure(2) do |config|
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
-#  config.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+
+  
   
 
   # Share an additional folder to the guest VM. The first argument is
@@ -44,13 +47,6 @@ Vagrant.configure(2) do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-   config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-   vb.memory = "2048"
-   end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -66,46 +62,74 @@ Vagrant.configure(2) do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
 
-     #Definition for "front" specific VM instannces
+   # Set a base path
+   basepath = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/"
+   config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
+
+   #VirtualBox config
+#   config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+#   vb.memory = "2048"
+#   end
+
+   #Common VM attributes
+
+
+   config.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+   config.vm.synced_folder ".", "/vagrant", :disabled => true
+   
+     #"front" specific VM attributes
      config.vm.define  :front do |front|
        front.vm.hostname = 'front'
-       front.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
        front.vm.network "private_network", ip: "10.1.1.10"
+       front.vm.provider "virtualbox" do |vb|
+         vb.memory = "2048"
+       end
+       
+#       front.vm.provision "shell", inline: <<-SHELL
+#         sudo yum -y update
+#         SHELL
 
-       front.vm.provision "shell", inline: <<-SHELL
-         sudo yum -y update
-         SHELL
+
 
        #Reboot the VM prior to running Ansible to activate kernel and OS updates
-       front.vm.provision :reload
-       
+#       front.vm.provision :reload
+
 #       front.vm.provision :ansible do |ansible|
-#       ansible.playbook = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/workingdirectory/vagrant/provisioning/front-playbook.yml"
+#       ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/front-playbook.yml"
 #         ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
 #         # Disable default limit (required with Vagrant 1.5+)
 #         ansible.limit = 'all'
 #       end
      end
      
-     #Definition for "app" specific VM instannces
-     config.vm.define :app do |app|
-       app.vm.hostname = 'app'
-       app.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
-       app.vm.network "private_network", ip: "10.1.1.20"
+#     #"app" specific VM attributes
+#     config.vm.define :app do |app|
+#       app.vm.hostname = 'app'
+#       app.vm.network "private_network", ip: "10.1.1.20"
+#       app.vm.provider "virtualbox" do |vb|
+#         vb.memory = "4096"
+#       end
+     
+#       app.vm.provision "shell", inline: <<-SHELL
+#         sudo yum -y update
+#         SHELL
 
-       app.vm.provision "shell", inline: <<-SHELL
-         sudo yum -y update
-         SHELL
+
 
        #Reboot the VM prior to running Ansible to activate kernel and OS updates
-       app.vm.provision :reload
+#       app.vm.provision :reload
+
 
  #      app.vm.provision :ansible do |ansible|
- #        ansible.playbook = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/workingdirectory/vagrant/provisioning/app-playbook.yml"
+ #        ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/app-playbook.yml"
  #        ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
  #        # Disable default limit (required with Vagrant 1.5+)
  #        ansible.limit = 'all'
  #      end
-     end
-#   end
+#     end
+#end
 end
