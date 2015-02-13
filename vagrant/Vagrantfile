@@ -1,12 +1,15 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+#Vagrant config file for Warby Parker homework assignment.
+#Authored by Martin Beauchamp, Copyright 2015
+
 Vagrant.configure(2) do |config|
   
    # Set a base path
    basepath = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/"
 
-   # Define box given by WP
+   # Define Vagrant box given by WP
    config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
 
    #Don't upgrade boxes automatically
