@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-#Vagrant config file for Warby Parker homework assignment.
+#Vagrant config file for Warby Parker Sr. Infrastructure Engineer homework assignment.
 #Authored by Martin Beauchamp, Copyright 2015
 
 Vagrant.configure(2) do |config|
@@ -9,6 +9,10 @@ Vagrant.configure(2) do |config|
    # Set a base path
    basepath = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/"
 
+   # Set IP addresses for hosts: front and app
+   front_ip = "10.10.10.10"
+   app_ip   = "10.10.10.20"
+   
    # Define Vagrant box given by WP
    config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
 
@@ -21,57 +25,74 @@ Vagrant.configure(2) do |config|
 #   end
 
    #Common VM attributes
+   #Each VM has a public network which uses a bridge device
    config.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+
+   #Disable shared folders between VM instances and the host - not needed, and this causes problems when you upgrade the kernel
    config.vm.synced_folder ".", "/vagrant", :disabled => true
+
+   #Update OS and all userland software and install EPEL
+   config.vm.provision "shell", inline: <<-SHELL
+         sudo yum -y update
+         sudo yum -y install epel-release
+         SHELL
    
-     #"front" specific VM attributes
-     config.vm.define  :front do |front|
+   #Ansible-based provisioning
+   config.vm.provision "ansible" do |ansible|
+     ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
+     ansible.sudo = true
+     ansible.extra_vars = { ansible_ssh_user: 'vagrant',
+                            ansible_front_ip: "#{front_ip}",
+                            ansible_app_ip: "#{app_ip}",
+                          }
+     # Disable default limit (required with Vagrant 1.5+)
+     ansible.limit = 'all'
+   end
+   
+   #"front" specific VM attributes
+     config.vm.define "front" do |front|
+
        #HOSTNAME
        front.vm.hostname = 'front'
+
        #PRIVATE NETWORK
-       front.vm.network "private_network", ip: "10.10.10.10"
+       front.vm.network "private_network", ip: "#{front_ip}"
+
        #RAM
        front.vm.provider "virtualbox" do |vb|
          vb.memory = "2048"
        end
        
-       #Update OS and all userland software
-       front.vm.provision "shell", inline: <<-SHELL
-         sudo yum -y update
-         SHELL
-
-       #Ansible-based provisioning
-#       front.vm.provision :ansible do |ansible|
-#       ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/front-playbook.yml"
-#         ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
-#         # Disable default limit (required with Vagrant 1.5+)
-#         ansible.limit = 'all'
+#       #Ansible-based provisioning
+#       front.vm.provision "ansible" do |ansible|
+#       ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
+#       ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
+#       # Disable default limit (required with Vagrant 1.5+)
+#       ansible.limit = 'front'
 #       end
      end
      
-#     #"app" specific VM attributes
-     config.vm.define :app do |app|
+     #"app" specific VM attributes
+     config.vm.define "app" do |app|
+
        #HOSTNAME
        app.vm.hostname = 'app'
+
        #PRIVATE NETWORK
-       app.vm.network "private_network", ip: "10.10.10.20"
+       app.vm.network "private_network", ip: "#{app_ip}"
+
        #RAM
        app.vm.provider "virtualbox" do |vb|
          vb.memory = "4096"
        end
-     
-       #Update OS and all userland software
-       app.vm.provision "shell", inline: <<-SHELL
-         sudo yum -y update
-         SHELL
 
        #Ansible-based provisioning
- #      app.vm.provision :ansible do |ansible|
- #        ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/app-playbook.yml"
- #        ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
- #        # Disable default limit (required with Vagrant 1.5+)
- #        ansible.limit = 'all'
- #      end
-#     end
+#       app.vm.provision "ansible" do |ansible|
+#         ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
+#         ansible.extra_vars = { ansible_ssh_user: 'vagrant' }
+#         # Disable default limit (required with Vagrant 1.5+)
+#         ansible.limit = 'app'
+#       end
+     end
 end
-end
+

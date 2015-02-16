@@ -1,0 +1,24 @@
+#Ansible playbook for Warby Parker Sr. Infrastructure Engineer homework assignment.
+#Authored by Martin Beauchamp, Copyright 2015
+
+# This playbook implements the required steps to setup the homework test environment
+# as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
+
+---
+- hosts: front
+  tasks:
+  - name: Install Nginx and Memcached
+    yum: pkg={{ item }} state=present
+    with_items:
+      - nginx
+      - memcached
+
+- hosts: app
+  tasks:
+  - name: Install Apache and MySQL
+    yum: pkg={{ item }} state=present
+    with_items:
+      - httpd
+      - php
+      - mysql-server
+        
