@@ -5,15 +5,45 @@
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
 
 ---
+- hosts: all
+
+  tasks:
+
+    # We get an out of date VM from Vagrant and so we must update the kernel and system packages
+    - name: Kernel package updates
+      action: yum name=kernel* state=latest
+      # If there are any updates, we register the variable and monitor if it changes in the Reboot and Wait tasks.
+      register: kernelupdate
+
+    - name: System package updates
+      action: yum name=* state=latest
+      
+    - name: Reboot
+      command: shutdown -r now "Ansible kernel updates triggered a reboot."
+      async: 0
+      poll: 0
+      ignore_errors: true
+      when: kernelupdate.changed
+
+    - name: Wait for host to come back up
+      local_action: wait_for host={{ inventory_hostname }} delay=30 timeout=300 state=started
+      sudo: false
+      when: kernelupdate.changed
+      
 - hosts: front
+
+  # Install the required application packages
   tasks:
   - name: Install Nginx and Memcached
     yum: pkg={{ item }} state=present
     with_items:
+      - epel-release
       - nginx
       - memcached
 
 - hosts: app
+
+  # Install the required application packages
   tasks:
   - name: Install Apache and MySQL
     yum: pkg={{ item }} state=present
@@ -21,4 +51,3 @@
       - httpd
       - php
       - mysql-server
-        
