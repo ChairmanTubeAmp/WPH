@@ -26,6 +26,9 @@
     command: echo 'ZONE="America/New_York"' > /etc/sysconfig/clock
     when: current_zone.stdout != '{{ timezone }}'
 
+    # Start ntpd and enable it
+  - service: name=ntpd state=started enabled=yes
+
 #    # We get an out of date VM from Vagrant and so we must update the kernel and system packages
 #  - name: Kernel package updates
 #    action: yum name=kernel* state=latest
