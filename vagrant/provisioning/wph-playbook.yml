@@ -4,6 +4,9 @@
 # This playbook implements the required steps to setup the homework test environment
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
 
+#############
+# Hosts: all
+
 ---
 - hosts: all
 
@@ -11,6 +14,9 @@
     timezone: America/New_York
     
   tasks:
+
+    #############
+    #Setup timezone files and start ntp
 
     # Set timezone to zone defined in timezone variable
   - name: Check current timezone
@@ -30,55 +36,76 @@
     # Start ntpd and enable it
   - service: name=ntpd state=started enabled=yes
 
-    # We get an out of date VM from Vagrant and so we must update the kernel and system packages
-  - name: Kernel package updates
-    action: yum name=kernel* state=latest
-    # If there are any updates, we register the variable and see if it changes in the Reboot and Wait tasks.
-    register: kernelupdate
+    #############
+    # Update kernel and packages
     
-  - name: System package updates
-    action: yum name=* state=latest
+#    # We get an out of date VM from Vagrant and so we must update the kernel and system packages
+#  - name: Kernel package updates
+#    action: yum name=kernel* state=latest
+#    # If there are any updates, we register the variable and see if it changes in the Reboot and Wait tasks.
+#    register: kernelupdate
+    
+#  - name: System package updates
+#    action: yum name=* state=latest
       
-  - name: Reboot
-    command: /sbin/shutdown -r now "Ansible kernel updates triggered a reboot."
-    async: 0
-    poll: 0
-    ignore_errors: true
-    when: kernelupdate.changed
+#  - name: Reboot
+#    command: /sbin/shutdown -r now "Ansible kernel updates triggered a reboot."
+#    async: 0
+#    poll: 0
+#    ignore_errors: true
+#    when: kernelupdate.changed
 
-  - name: Wait for host to come back up
-    #This wait_for doesn't actually test SSH with Vagrant because of the port changes, but it makes the Playbook work
-    local_action: wait_for host={{ inventory_hostname }} delay=30 timeout=300 state=started
-    sudo: false
-    when: kernelupdate.changed
+#  - name: Wait for host to come back up
+#    #This wait_for doesn't actually test SSH with Vagrant because of the port changes, but it makes the Playbook work
+#    local_action: wait_for host={{ inventory_hostname }} delay=30 timeout=300 state=started
+#    sudo: false
+#    when: kernelupdate.changed
+
+#############
+# Hosts: front
+
+#- hosts: front
+
+#  tasks:
+
+#  # Install the required application packages
+#  - name: Install Nginx and Memcached
+#    yum: pkg={{ item }} state=present
+#    with_items:
+#      - epel-release
+#      - nginx
+#      - memcached
+#      - emacs
+
+    ##############
+    # Start services
     
-- hosts: front
+    # Start Nginx and enable it
+    - service: name=nginx state=started enabled=yes
 
-  tasks:
+    # Start Memcached and enable it
+    - service: name=memcached state=started enabled=yes
 
-  # Install the required application packages
-  - name: Install Nginx and Memcached
-    yum: pkg={{ item }} state=present
-    with_items:
-      - epel-release
-      - nginx
-      - memcached
-      - emacs
+
+#############
+# Hosts: app
 
 - hosts: app
 
   tasks:
 
-  # Install the required application packages
-  - name: Install Apache and MySQL
-    yum: pkg={{ item }} state=present
-    with_items:
-      - httpd
-      - php
-      - mysql-server
-      - emacs
+#  # Install the required application packages
+#  - name: Install Apache and MySQL
+#    yum: pkg={{ item }} state=present
+#    with_items:
+#      - httpd
+#      - php
+#      - mysql-server
+#      - emacs
 
-  #Copy the WPH files to the app server
+    ##############
+    # Copy the WPH files to the app server
+
   - name: Set ownership and modes on the Apache DocuemntRoot directory
     file: path=/var/www/html owner=apache group=apache mode=0770
 
@@ -88,4 +115,12 @@
   - name: Copy WPH SQL file to the app server
     copy: src={{ vagrantfile_basepath }}/workingdirectory/test.sql dest=/var/lib/mysql owner=mysql group=mysql mode=0640
 
+    ##############
+    # Start services
     
+    # Start Apache and enable it
+    - service: name=httpd state=started enabled=yes
+
+    # Start MySQL and enable it
+    - service: name=mysqld state=started enabled=yes
+      
