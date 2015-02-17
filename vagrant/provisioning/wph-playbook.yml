@@ -3,11 +3,15 @@
 
 # This playbook implements the required steps to setup the homework test environment
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
+# In addition it does the following:
+# 1. sets up the VMs with a New York timezone, and enables ntpd
+
+
+---
 
 #############
 # Hosts: all
 
----
 - hosts: all
 
   vars:
