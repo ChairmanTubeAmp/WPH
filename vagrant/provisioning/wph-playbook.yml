@@ -42,6 +42,7 @@
       - epel-release
       - nginx
       - memcached
+      - emacs
 
 - hosts: app
 
@@ -54,5 +55,14 @@
       - httpd
       - php
       - mysql-server
+      - emacs
 
-  
+  #Copy the WPH files to the app server
+  - name: Set ownership and modes on the Apache DocuemntRoot directory
+    file: path=/var/www/html owner=apache group=apache mode=0770
+
+  - name: Copy WPH PHP file to the app server
+    copy: src={{ vagrantfile_basepath }}/workingdirectory/test.php dest=/var/www/html/test.php owner=apache group=apache mode=0660
+
+  - name: Copy WPH SQL file to the app server
+    copy: src={{ vagrantfile_basepath }}/workingdirectory/test.sql dest=/var/lib/mysql owner=mysql group=mysql mode=0640
