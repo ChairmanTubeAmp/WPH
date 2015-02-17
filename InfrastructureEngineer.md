@@ -16,7 +16,7 @@ The process should perform the following steps:
 1. Setup `nginx` and `memcached` on the `front` server
 2. Setup `apache2`, `php5.3`, `mysql-server` on the `app` server
 3. Download and install the following PHP script into the document root of
-Apache on `app`:
+Apache on `app` and make it the default page:
 [test.php](test.php)
 _There may be other packages required on the servers to successfully execute the
 test.php script._
@@ -40,6 +40,5 @@ request.
 
 You will provide the Ansible Playbook and Vagrantfile to setup and
 configure each server.  Running 'vagrant up' will provision each server
-to these requirements.  Accessing nginx on `front` or Apache on `app` should
-respond with the same results.  There should be no errors on the resulting
-`test.php` page.
+to these requirements.  Accessing nginx on `http://front` should return test.php.
+There should be no errors on the resulting `test.php` page.
