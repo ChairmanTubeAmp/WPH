@@ -8,11 +8,8 @@
 # In addition to the explicit requirements, it does the following:
 # 1. Updates the kernel, OS packages, and reboots if the variable yumupdate is set to True
 # 2. Sets up the VMs with a New York timezone, and enables ntpd
-# 3. Drops the following incoming traffic for security reasons:
-#    a. null packets
-#    b. syn-flood
-#    c. XMAS
-#    d. all udp packets
+# 3. Uses a "default deny" firewall policy for INPUT and FORWARD chains to drop all traffic except for whitelisted rules
+# 4. It DOES NOT use ansible-vault for MySQL credentials as there are no actual secrets here (only homework secrets)
 
 
 ---
@@ -116,7 +113,6 @@
     # Start services
    
     # Start Nginx and enable it
-
   - service: name=nginx state=started enabled=yes
 
     # Start Memcached and enable it
@@ -137,7 +133,10 @@
     with_items:
       - httpd
       - php
+      - php-mysql
+      - php-pecl-memcache
       - mysql-server
+      - MySQL-python
       - emacs
 
     ##############
@@ -161,3 +160,11 @@
     # Start MySQL and enable it
   - service: name=mysqld state=started enabled=yes
 
+    # Login with 'root' and blank password, then set a password for root
+  - name: Set MySQL root password
+    mysql_user: name=root state=present password=infra1234
+
+    # Setup root user's .my.cnf file
+  - name: Set MySQL .my.cnf file
+    copy: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/root-.my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+    
