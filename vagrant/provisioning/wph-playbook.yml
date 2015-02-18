@@ -5,7 +5,12 @@
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
 # In addition it does the following:
 # 1. sets up the VMs with a New York timezone, and enables ntpd
-
+# 2. Drops the following incoming traffic for security reasons:
+#    a. null packets
+#    b. syn-flood
+#    c. XMAS
+#    d. all udp packets
+# 3. 
 
 ---
 
@@ -35,8 +40,7 @@
     when: current_zone.stdout != '{{ timezone }}'
 
   - name: Set CentOS clock
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/sysconfig-clock.j2 dest=/etc/sysconfig/clock owner=root group=root mode=0644
-    when: current_zone.stdout != '{{ timezone }}'
+    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-clock.j2 dest=/etc/sysconfig/clock owner=root group=root mode=0644
 
     # Start ntpd and enable it
   - service: name=ntpd state=started enabled=yes
@@ -68,6 +72,24 @@
     sudo: false
     when: kernelupdate.changed
 
+    #############
+    #Setup /etc/hosts
+    
+  - name: Setup /etc/hosts
+    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-hosts.j2 dest=/etc/hosts owner=root group=root mode=0644
+
+    ##############
+    # Setup iptables
+  - name: Insert iptables template
+    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-iptables.j2 dest=/etc/sysconfig/iptables owner=root group=root mode=0600
+    notify: restart iptables
+
+
+  handlers:
+
+  - name: restart iptables
+    service: name=iptables state=restarted
+
 #############
 # Hosts: front
 
@@ -84,14 +106,15 @@
       - memcached
       - emacs
 
-  ##############
-  # Start services
+    
+    ##############
+    # Start services
    
-  # Start Nginx and enable it
+    # Start Nginx and enable it
 
   - service: name=nginx state=started enabled=yes
 
-  # Start Memcached and enable it
+    # Start Memcached and enable it
   - service: name=memcached state=started enabled=yes
 
 
@@ -123,12 +146,12 @@
   - name: Copy WPH SQL file to the app server
     copy: src={{ vagrantfile_basepath }}/workingdirectory/test.sql dest=/var/lib/mysql owner=mysql group=mysql mode=0640
 
-  ##############
-  # Start services
+    ##############
+    # Start services
    
-  # Start Apache and enable it
+    # Start Apache and enable it
   - service: name=httpd state=started enabled=yes
 
-  # Start MySQL and enable it
+    # Start MySQL and enable it
   - service: name=mysqld state=started enabled=yes
-      
+
