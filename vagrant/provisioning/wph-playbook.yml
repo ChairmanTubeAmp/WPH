@@ -3,14 +3,17 @@
 
 # This playbook implements the required steps to setup the homework test environment
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
-# In addition it does the following:
-# 1. sets up the VMs with a New York timezone, and enables ntpd
-# 2. Drops the following incoming traffic for security reasons:
+# It is written as one playbook for ease of grading and only calls external template files
+
+# In addition to the explicit requirements, it does the following:
+# 1. Updates the kernel, OS packages, and reboots if the variable yumupdate is set to True
+# 2. Sets up the VMs with a New York timezone, and enables ntpd
+# 3. Drops the following incoming traffic for security reasons:
 #    a. null packets
 #    b. syn-flood
 #    c. XMAS
 #    d. all udp packets
-# 3. 
+
 
 ---
 
@@ -80,6 +83,7 @@
 
     ##############
     # Setup iptables
+
   - name: Insert iptables template
     template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-iptables.j2 dest=/etc/sysconfig/iptables owner=root group=root mode=0600
     notify: restart iptables
@@ -97,7 +101,8 @@
 
   tasks:
 
-  # Install the required application packages
+    #############
+    # Install the required application packages
   - name: Install Nginx and Memcached
     yum: pkg={{ item }} state=present
     with_items:
@@ -125,7 +130,8 @@
 
   tasks:
 
-  # Install the required application packages
+    #############
+    # Install the required application packages
   - name: Install Apache and MySQL
     yum: pkg={{ item }} state=present
     with_items:
