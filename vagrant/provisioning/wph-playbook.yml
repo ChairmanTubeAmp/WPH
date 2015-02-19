@@ -5,12 +5,12 @@
 # as specified here: https://github.com/ChairmanTubeAmp/WPH/blob/master/InfrastructureEngineer.md
 # It is written as one playbook for ease of grading and only calls external template files
 
-# In addition to the explicit requirements, it does the following:
-# 1. Updates the kernel, OS packages, and reboots if the variable yumupdate is set to True
+# In addition to the explicit homework requirements, it does the following:
+# 1. Updates the kernel, OS packages, and reboots if the variable yumupdate is set to True (This is set in the Vagrantfile)
 # 2. Sets up the VMs with a New York timezone, and enables ntpd
 # 3. Uses a "default deny" firewall policy for INPUT and FORWARD chains to drop all traffic except for whitelisted rules
 # 4. It DOES NOT use ansible-vault for MySQL credentials as there are no actual secrets here (only homework secrets)
-
+# 5. The Apache config logs the X-Forwarded-For field and the actual bytes transferred in and out
 
 ---
 
@@ -19,11 +19,15 @@
 
 - hosts: all
 
+  #############
+  # Variables
+
   vars:
     timezone: America/New_York
-    # Control the updating of kernel and OS packages as they are time consuming
-    yumupdate: False
     
+  #############
+  # Tasks
+
   tasks:
 
     #############
@@ -53,11 +57,11 @@
     action: yum name=kernel* state=latest
     # If there are any updates, we register the variable and see if it changes in the Reboot and Wait tasks.
     register: kernelupdate
-    when: yumupdate
+    when: vagrantfile_yumupdate
     
   - name: System package updates
     action: yum name=* state=latest
-    when: yumupdate
+    when: vagrantfile_yumupdate
     
   - name: Reboot
     command: /sbin/shutdown -r now "Ansible kernel updates triggered a reboot."
@@ -83,8 +87,10 @@
 
   - name: Insert iptables template
     template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-iptables.j2 dest=/etc/sysconfig/iptables owner=root group=root mode=0600
-    notify: restart iptables
+    notify: Restart iptables
 
+  ##############
+  # Handlers
 
   handlers:
 
@@ -96,11 +102,15 @@
 
 - hosts: front
 
+#############
+# Tasks
+
   tasks:
 
     #############
     # Install the required application packages
-  - name: Install Nginx and Memcached
+
+  - name: Install Nginx, Memcached, and dependencies
     yum: pkg={{ item }} state=present
     with_items:
       - epel-release
@@ -112,11 +122,16 @@
     ##############
     # Start services
    
-  - name: Start Nginx and enable it
-    service: name=nginx state=started enabled=yes
+  - name: Enable Nginx
+    service: name=nginx enabled=yes
 
   - name: Start Memcached and enable it
     service: name=memcached state=started enabled=yes
+
+  handlers:
+
+  - name: Restart Nginx
+    service: name=nginx state=restarted
 
 
 #############
@@ -124,15 +139,22 @@
 
 - hosts: app
 
+  #############
+  # Variables
+
   vars:
     mysql_root_password: infra1234
     mysql_infratest_password: infra1234
+
+  #############
+  # Tasks
 
   tasks:
 
     #############
     # Install the required application packages
-  - name: Install Apache and MySQL
+
+  - name: Install AMP and dependencies
     yum: pkg={{ item }} state=present
     with_items:
       - httpd
@@ -158,7 +180,7 @@
     ##############
     # Start services
    
-  - name: Start Apache and enable it
+  - name: Enable Apache
     service: name=httpd state=started enabled=yes
 
   - name: Start MySQL and enable it
@@ -184,10 +206,7 @@
     # Create test database
   - name: Create test MySQL database
     mysql_db: name=infratest state=present
-    
-    # Import a new database with name 'infratest'
-  - name: Import test MySQL database with test.sql file
-    mysql_db: name=infratest state=import target=/var/lib/mysql/test.sql
+    notify: Import infratest database
 
     # Setup infratest MySQL user
   - name: Add MySQL infratest user and password access from localhost
@@ -197,3 +216,22 @@
       - 127.0.0.1
       - ::1
       - localhost
+
+    ##############
+    # Configure Apache
+
+  - name: Copy Apache config
+    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-httpd-conf-httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf owner=root group=root mode=0600
+    notify: Restart Apache
+    
+  ##############
+  # Handlers
+
+  handlers:
+
+  - name: Restart Apache
+    service: name=httpd state=restarted
+
+    # Import a new database with name 'infratest'
+  - name: Import infratest database
+    mysql_db: name=infratest state=import target=/var/lib/mysql/test.sql
