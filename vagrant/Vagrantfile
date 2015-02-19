@@ -10,7 +10,7 @@ Vagrant.configure(2) do |config|
    basepath = "/Users/martinbeauchamp/Downloads/WarbyParkerHomework/"
 
    # Set templates directory
-   templates = "workingdirectory/vagrant/provisioning/templates/"
+   templates = "martin-beauchamp/vagrant/provisioning/templates/"
    
    # Set IP addresses for hosts: front and app
    front_ip = "10.10.10.10"
@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
    app_port = "8080"
 
    # Set yum updates to True or False
-   yumupdate = "False"
+   yumupdate = "True"
    
    # Define Vagrant box given by WP
    config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
@@ -57,7 +57,7 @@ Vagrant.configure(2) do |config|
        
        #Ansible-based provisioning
        front.vm.provision "ansible" do |ansible|
-       ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
+       ansible.playbook = "#{basepath}/martin-beauchamp/vagrant/provisioning/wph-playbook.yml"
        ansible.sudo = true
        ansible.extra_vars = { ansible_ssh_user:      "vagrant",
                               vagrantfile_front_ip:  "#{front_ip}",
@@ -89,7 +89,7 @@ Vagrant.configure(2) do |config|
 
        #Ansible-based provisioning
        app.vm.provision "ansible" do |ansible|
-         ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
+         ansible.playbook = "#{basepath}/martin-beauchamp/vagrant/provisioning/wph-playbook.yml"
          ansible.sudo = true
          ansible.extra_vars = { ansible_ssh_user:      "vagrant",
                                 vagrantfile_front_ip:  "#{front_ip}",

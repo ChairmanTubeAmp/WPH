@@ -59,7 +59,7 @@ try {
      
      if ( $memcache->set('infratest_memcache', $cached_val) ) {
 	  $memcache_result = "<p>Set memcache value successfully</p>";
-	  $memcache_result .= "GET value: " . htmlentities($memcache->get('infratest_memcache'));
+	  $memcache_result .= "GET value: " . $memcache->get('infratest_memcache');
      }
      else {
 	  $memcache_result = "<p>Error: Did not set memcache value</p>";

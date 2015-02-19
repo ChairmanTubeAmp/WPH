@@ -12,6 +12,8 @@
 # 4. It DOES NOT use ansible-vault for MySQL credentials as there are no actual secrets here (only homework secrets)
 # 5. The Apache config logs the X-Forwarded-For field and the actual bytes transferred in and out
 # 6. Securely implements unspecified firewall rule which is required for the PHP test file to connect to the front memcached server
+# 7. It does not make an attempt to lock down the PHP application server. This is a solved problem and I was short on free time.
+
 ---
 
 #############
@@ -116,7 +118,6 @@
       - epel-release
       - nginx
       - memcached
-      - emacs
 
     
     ##############
@@ -170,7 +171,6 @@
       - php-pecl-memcache
       - mysql-server
       - MySQL-python
-      - emacs
 
     ##############
     # Copy the WPH files to the app server
@@ -179,10 +179,10 @@
     file: path=/var/www/html owner=apache group=apache mode=0770
 
   - name: Copy WPH PHP file to the app server
-    copy: src={{ vagrantfile_basepath }}/workingdirectory/test.php dest=/var/www/html/test.php owner=apache group=apache mode=0660
+    copy: src={{ vagrantfile_basepath }}/martin-beauchamp/test.php dest=/var/www/html/test.php owner=apache group=apache mode=0660
 
   - name: Copy WPH SQL file to the app server
-    copy: src={{ vagrantfile_basepath }}/workingdirectory/test.sql dest=/var/lib/mysql owner=mysql group=mysql mode=0640
+    copy: src={{ vagrantfile_basepath }}/martin-beauchamp/test.sql dest=/var/lib/mysql owner=mysql group=mysql mode=0640
 
     ##############
     # Start services
