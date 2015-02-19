@@ -10,6 +10,7 @@
 {% endif %}
 {% if inventory_hostname == 'front' %}
 -A INPUT -p tcp  --dport 80 -j ACCEPT
+-A INPUT -p tcp  -s 10.10.10.20/32 --dport 11211 -m state --state NEW,ESTABLISHED -j ACCEPT
 {% endif %}
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -p icmp -j ACCEPT

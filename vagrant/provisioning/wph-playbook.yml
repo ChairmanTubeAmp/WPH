@@ -11,7 +11,7 @@
 # 3. Uses a "default deny" firewall policy for INPUT and FORWARD chains to drop all traffic except for whitelisted rules
 # 4. It DOES NOT use ansible-vault for MySQL credentials as there are no actual secrets here (only homework secrets)
 # 5. The Apache config logs the X-Forwarded-For field and the actual bytes transferred in and out
-
+# 6. Securely implements unspecified firewall rule which is required for the PHP test file to connect to the front memcached server
 ---
 
 #############
@@ -24,7 +24,7 @@
 
   vars:
     timezone: America/New_York
-    
+
   #############
   # Tasks
 
@@ -44,7 +44,7 @@
     when: current_zone.stdout != '{{ timezone }}'
 
   - name: Set CentOS clock
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-clock.j2 dest=/etc/sysconfig/clock owner=root group=root mode=0644
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}etc-sysconfig-clock.j2 dest=/etc/sysconfig/clock owner=root group=root mode=0644
 
     # Start ntpd and enable it
   - service: name=ntpd state=started enabled=yes
@@ -80,13 +80,13 @@
     #Setup /etc/hosts
     
   - name: Setup /etc/hosts
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-hosts.j2 dest=/etc/hosts owner=root group=root mode=0644
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}etc-hosts.j2 dest=/etc/hosts owner=root group=root mode=0644
 
     ##############
     # Setup iptables
 
   - name: Insert iptables template
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-sysconfig-iptables.j2 dest=/etc/sysconfig/iptables owner=root group=root mode=0600
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}etc-sysconfig-iptables.j2 dest=/etc/sysconfig/iptables owner=root group=root mode=0600
     notify: Restart iptables
 
   ##############
@@ -128,6 +128,13 @@
   - name: Start Memcached and enable it
     service: name=memcached state=started enabled=yes
 
+    ##############
+    # Copy Nginx config
+
+  - name: Copy Nginx config
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}etc-nginx-nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root group=root mode=0600
+    notify: Restart Nginx
+    
   handlers:
 
   - name: Restart Nginx
@@ -201,7 +208,7 @@
 
     # Setup root user's .my.cnf file
   - name: Set MySQL .my.cnf file
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/root-my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}root-my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
 
     # Create test database
   - name: Create test MySQL database
@@ -221,7 +228,7 @@
     # Configure Apache
 
   - name: Copy Apache config
-    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/etc-httpd-conf-httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf owner=root group=root mode=0600
+    template: src={{ vagrantfile_basepath }}{{ vagrantfile_templates }}etc-httpd-conf-httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf owner=root group=root mode=0600
     notify: Restart Apache
     
   ##############
