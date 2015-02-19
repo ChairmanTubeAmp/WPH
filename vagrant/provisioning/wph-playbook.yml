@@ -88,7 +88,7 @@
 
   handlers:
 
-  - name: restart iptables
+  - name: Restart iptables
     service: name=iptables state=restarted
 
 #############
@@ -112,17 +112,21 @@
     ##############
     # Start services
    
-    # Start Nginx and enable it
-  - service: name=nginx state=started enabled=yes
+  - name: Start Nginx and enable it
+    service: name=nginx state=started enabled=yes
 
-    # Start Memcached and enable it
-  - service: name=memcached state=started enabled=yes
+  - name: Start Memcached and enable it
+    service: name=memcached state=started enabled=yes
 
 
 #############
 # Hosts: app
 
 - hosts: app
+
+  vars:
+    mysql_root_password: infra1234
+    mysql_infratest_password: infra1234
 
   tasks:
 
@@ -154,17 +158,41 @@
     ##############
     # Start services
    
-    # Start Apache and enable it
-  - service: name=httpd state=started enabled=yes
+  - name: Start Apache and enable it
+    service: name=httpd state=started enabled=yes
 
-    # Start MySQL and enable it
-  - service: name=mysqld state=started enabled=yes
+  - name: Start MySQL and enable it
+    service: name=mysqld state=started enabled=yes
 
     # Login with 'root' and blank password, then set a password for root
-  - name: Set MySQL root password
-    mysql_user: name=root state=present password=infra1234
+  - name: Update mysql root password for all root accounts
+    mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
+    with_items:
+      - "{{ inventory_hostname }}"
+      - 127.0.0.1
+      - ::1
+      - localhost
 
     # Setup root user's .my.cnf file
   - name: Set MySQL .my.cnf file
-    copy: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/root-.my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+    template: src={{ vagrantfile_basepath }}/workingdirectory/vagrant/provisioning/root-my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+
+    # Create test database
+  - name: Create test MySQL database
+    mysql_db: name=infratest state=present
+    
+    # Import a new database with name 'infratest'
+  - name: Import test MySQL database with test.sql file
+    mysql_db: name=infratest state=import target=/var/lib/mysql/test.sql
+
+    # Setup infratest MySQL user
+  - name: Add MySQL infratest user and password access from localhost
+    mysql_user: name=infratest host={{ item }} password={{ mysql_infratest_password }} priv=infratest.*:ALL
+    with_items:
+      - "{{ inventory_hostname }}"
+      - 127.0.0.1
+      - ::1
+      - localhost
+      
+    
     
