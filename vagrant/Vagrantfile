@@ -12,6 +12,12 @@ Vagrant.configure(2) do |config|
    # Set IP addresses for hosts: front and app
    front_ip = "10.10.10.10"
    app_ip   = "10.10.10.20"
+
+   # Set port for app server to listen on
+   app_port = "8080"
+
+   # Set yum updates to True or False
+   yumupdate = "False"
    
    # Define Vagrant box given by WP
    config.vm.box = "#{basepath}centos-65-x64-virtualbox-nocm.box"
@@ -50,10 +56,12 @@ Vagrant.configure(2) do |config|
        front.vm.provision "ansible" do |ansible|
        ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
        ansible.sudo = true
-       ansible.extra_vars = { ansible_ssh_user: 'vagrant',
-                              vagrantfile_front_ip: "#{front_ip}",
-                              vagrantfile_app_ip:   "#{app_ip}",
-                              vagrantfile_basepath: "#{basepath}",
+       ansible.extra_vars = { ansible_ssh_user:      "vagrant",
+                              vagrantfile_front_ip:  "#{front_ip}",
+                              vagrantfile_app_ip:    "#{app_ip}",
+                              vagrantfile_app_port:  "#{app_port}",
+                              vagrantfile_basepath:  "#{basepath}",
+                              vagrantfile_yumupdate: "#{yumupdate}",
                             }
        # Disable default limit (required with Vagrant 1.5+)
        ansible.limit = 'front'
@@ -79,10 +87,12 @@ Vagrant.configure(2) do |config|
        app.vm.provision "ansible" do |ansible|
          ansible.playbook = "#{basepath}/workingdirectory/vagrant/provisioning/wph-playbook.yml"
          ansible.sudo = true
-         ansible.extra_vars = { ansible_ssh_user: 'vagrant',
-                                vagrantfile_front_ip: "#{front_ip}",
-                                vagrantfile_app_ip:   "#{app_ip}",
-                                vagrantfile_basepath: "#{basepath}",
+         ansible.extra_vars = { ansible_ssh_user:      "vagrant",
+                                vagrantfile_front_ip:  "#{front_ip}",
+                                vagrantfile_app_ip:    "#{app_ip}",
+                                vagrantfile_app_port:  "#{app_port}",
+                                vagrantfile_basepath:  "#{basepath}",
+                                vagrantfile_yumupdate: "#{yumupdate}",
                               }
          # Disable default limit (required with Vagrant 1.5+)
          ansible.limit = 'app'

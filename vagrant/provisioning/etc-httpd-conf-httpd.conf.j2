@@ -1,0 +1,60 @@
+# {{ ansible_managed }}
+# Manual customization of this file is not recommended.
+
+ServerRoot "/etc/httpd"
+PidFile run/httpd.pid
+Timeout 60
+KeepAlive Off
+ServerTokens OS
+MaxKeepAliveRequests 200
+KeepAliveTimeout 15
+ServerSignature Off
+
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule mime_module modules/mod_mime.so
+LoadModule dir_module modules/mod_dir.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule logio_module modules/mod_logio.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule negotiation_module modules/mod_negotiation.so
+
+UseCanonicalName Off
+
+<IfModule prefork.c>
+StartServers       8
+MinSpareServers    5
+MaxSpareServers   20
+ServerLimit      256
+MaxClients       256
+MaxRequestsPerChild  4000
+</IfModule>
+
+Include conf.d/*.conf
+
+BrowserMatch "Mozilla/2" nokeepalive
+BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
+BrowserMatch "RealPlayer 4\.0" force-response-1.0
+BrowserMatch "Java/1\.0" force-response-1.0
+BrowserMatch "JDK/1\.0" force-response-1.0
+
+<Directory />
+	Options FollowSymLinks -Indexes
+        AllowOverride None
+</Directory>
+
+TypesConfig /etc/mime.types
+
+DefaultType text/plain
+
+LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+
+User apache
+Group apache
+
+ServerName {{ inventory_hostname }}:{{ vagrantfile_app_port }}
+    Listen {{ vagrantfile_app_ip }}:{{ vagrantfile_app_port }}
+    DirectoryIndex test.php
+    DocumentRoot "/var/www/html"
+    CustomLog "/var/log/httpd/access_log" combinedio
+    ErrorLog "/var/log/httpd/error_log"
+    LogLevel warn
