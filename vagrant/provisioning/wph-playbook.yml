@@ -164,6 +164,10 @@
   - name: Start MySQL and enable it
     service: name=mysqld state=started enabled=yes
 
+
+    ##############
+    # Prepare MySQL users and databases
+    
     # Login with 'root' and blank password, then set a password for root
   - name: Update mysql root password for all root accounts
     mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
@@ -193,6 +197,3 @@
       - 127.0.0.1
       - ::1
       - localhost
-      
-    
-    
